@@ -74,6 +74,9 @@ int pendingColorPress = 0;
 #define VOLUME_POT 15
 
 #define LED_PIN    7
+
+#define COL_NULL 0x000000
+
 Adafruit_DotStar strip = Adafruit_DotStar(
   NUMPIXELS, DOTSTAR_BRG);
   
@@ -105,7 +108,7 @@ void setup() {
   digitalWrite(LED_PIN, LOW);
 
   Serial.begin(9600);
- // wait up to 3 seconds for the Serial device to become available
+  // wait up to 3 seconds for the Serial device to become available
   long unsigned debug_start = millis ();
   while (!Serial && ((millis () - debug_start) <= 3000))
     ;
@@ -181,7 +184,7 @@ void bladeIsAnimatingUp(){
      fadeStep = NUMPIXELS;
       isAnimating=0;
       bladeState = 2; 
-//      delay(200);
+      //delay(200); - 200 MS dely out temporary
       Serial.println("blade up complete");
       startHum();
     }
@@ -193,9 +196,9 @@ void bladeIsAnimatingDown(){
   int newSection = fadeStep-fadeStepSize;
   for( int j = fadeStep; j > newSection; j--) {
     
-     strip.setPixelColor(j-midpoint, 0x000000);
+     strip.setPixelColor(j-midpoint, COL_NULL);
      
-     strip.setPixelColor(midpoint+NUMPIXELS-j, 0x000000);
+     strip.setPixelColor(midpoint+NUMPIXELS-j, COL_NULL);
   }
   //Serial.println(fadeStep);
   fadeStep = newSection;
@@ -250,7 +253,7 @@ void detectMotion() {
 }
 void loop(){
   // Add entropy to random number generator; we use a lot of it.
- // random16_add_entropy( random() );
+  // random16_add_entropy( random() );
   
   //handle color selector button
   int BCreading = digitalRead(COLOR_BUTTON_PIN);
@@ -313,9 +316,9 @@ if (buttonState == LOW && !isAnimating) {
   Serial.println("BLADE BUTTON IS PRESSED");
       pendingPress = 1;
     }
-  switch(bladeState){
+  switch(bladeState){	//switch statement for animating the blade
       case 0:
-      //blade is off
+        //blade is off
         break;
       case 1:
         //blade is animating up
@@ -330,14 +333,14 @@ if (buttonState == LOW && !isAnimating) {
         bladeIsAnimatingDown();
         break;
       }
-      SPI.beginTransaction(SPISettings(10000000, MSBFIRST, SPI_MODE0));
-      digitalWrite(LED_PIN, HIGH);  // enable access to LEDs
-      strip.show();                     // Refresh strip
-      digitalWrite(LED_PIN, LOW);
-      SPI.endTransaction();   // allow other libs to use SPI again
 
-      delay(10);
-  
+      SPI.beginTransaction(SPISettings(10000000, MSBFIRST, SPI_MODE0));
+      digitalWrite(LED_PIN, HIGH);// Enable access to LEDs
+      strip.show();               // Refresh strip
+      digitalWrite(LED_PIN, LOW);
+      SPI.endTransaction();       // Allow other libs to use SPI again
+      delay(10);                  // A little 10 ms delay
+ 
   if(bladeState == 2){
     detectMotion();
   }
@@ -349,21 +352,30 @@ void nextColor(){
       selectedColorIndex = 0;
     }
  }
+
 void triggerSound(const char *filename){
   playFlashRaw1.play(filename);
 }
+
 void triggerSwing(const char *filename){
+  
   if(playSwingRaw.isPlaying()==0){
     playSwingRaw.play(filename);
-  } else {
+  }
+  
+  else
+    {
     Serial.println("already swinging");
     }
 }
-void startHum(){
-  //Serial.println("startHum");
-  playHUMraw.play("HUM2.RAW");
-  Serial.println(playHUMraw.isPlaying());
+void startHum()
+  {
+  //Serial.println("startHum");           //Old dev test
+  playHUMraw.play("HUM2.RAW");            //Plays HUM2.RAW
+  Serial.println(playHUMraw.isPlaying()); //Prints in console what is playing right now
   }
-void stopHum(){
-  playHUMraw.stop();
+
+void stopHum()
+  {
+  playHUMraw.stop(); //stops playing the song for the laser
   }
